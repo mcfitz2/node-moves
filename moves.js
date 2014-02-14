@@ -91,7 +91,7 @@ Moves.prototype.token_info = function(callback) {
     }
 
     var query = {
-        access_token: this.config.access_token;
+        access_token: this.config.access_token
     }
 
     this.http.get(this.config.oauth_base + '/tokeninfo?' + qs.stringify(query), callback)
