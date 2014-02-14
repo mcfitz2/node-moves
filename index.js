@@ -1,1 +1,1 @@
-module.exports = require('./moves')
+module.exports = require('./moves');

@@ -1,20 +1,25 @@
 var _ = require('underscore')
   , qs = require('querystring')
   , request = require('request')
-  , url = require('url')
+, url = require('url');
 var Moves = module.exports = function(config_obj) {
-    if(!(this instanceof Moves)) return new Moves(config_obj)
+    if (!(this instanceof Moves)) {
+	return new Moves(config_obj);
+    }
 
     var config = {
         oauth_base: 'https://api.moves-app.com/oauth/v1'
       , api_base: 'https://api.moves-app.com/api/v1'
       , authorize_url: '/authorize'
+    };
+    
+    this.config = _.extend(config, config_obj);
+    
+    this.http = request;
+
+    if (!this.config.client_id) { 
+	throw new Error('Missing Client ID');
     }
-
-    this.config = _.extend(config, config_obj)
-    this.http = request
-
-    if(!this.config.client_id) throw new Error('Missing Client ID')
 }
 
 Moves.prototype.authorize = function(options, res) {
@@ -60,18 +65,18 @@ Moves.prototype.token = function(code, callback) {
     this.http.post(this.config.oauth_base + '/access_token?' + qs.stringify(query), callback)
 }
 
-Moves.prototype.refresh_token = function(token, scope, callback) {
+Moves.prototype.refresh_token = function(scope, callback) {
     if(typeof scope === 'function' && !callback) {
         callback = scope
         scope = undefined
     }
-    if(!token)                         throw new Error('You must include a token')
+    if(!this.config.refresh_token)            throw new Error('You must include a token')
     if(!this.config.client_secret)     throw new Error('Missing client secret')
     if(typeof callback !== 'function') throw new Error('Invalid callback')
 
     var query = {
         grant_type: 'refresh_token'
-      , refresh_token: token
+      , refresh_token: this.config.refresh_token
       , client_id: this.config.client_id
       , client_secret: this.config.client_secret
     }
@@ -80,26 +85,28 @@ Moves.prototype.refresh_token = function(token, scope, callback) {
     this.http.post(this.config.oauth_base + '/access_token?' + qs.stringify(query), callback)
 }
 
-Moves.prototype.token_info = function(token, callback) {
-    if(!token) throw new Error('You must include a token')
+Moves.prototype.token_info = function(callback) {
+    if (!this.config.access_token) {
+	throw new Error('You must include a token');
+    }
 
     var query = {
-        access_token: token
+        access_token: this.config.access_token;
     }
 
     this.http.get(this.config.oauth_base + '/tokeninfo?' + qs.stringify(query), callback)
 }
 
-Moves.prototype.get = function(call, access_token, callback) {
+Moves.prototype.get = function(call, callback) {
     if(!call) throw new Error('call is required. Please refer to the Moves docs <https://dev.moves-app.com/docs/api>')
-    if(!access_token) throw new Error('Valid access token is required')
+    if(!this.access_token) throw new Error('Valid access token is required')
 
     var get_url = url.parse(this.config.api_base, true)
       , call_url = url.parse(call, true)
 
     get_url.pathname += call_url.pathname
     _.extend(get_url.query, call_url.query, {
-        access_token: access_token
+        access_token: this.config.access_token
     })
 
     this.http.get(url.format(get_url), callback)
