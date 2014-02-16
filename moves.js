@@ -99,7 +99,7 @@ Moves.prototype.token_info = function(callback) {
 
 Moves.prototype.get = function(call, params, callback) {
     if(!call) throw new Error('call is required. Please refer to the Moves docs <https://dev.moves-app.com/docs/api>')
-    if(!this.access_token) throw new Error('Valid access token is required')
+    if(!this.config.access_token) throw new Error('Valid access token is required')
 
     var url = url.join(this.config.api_base, call);
 
