@@ -97,18 +97,13 @@ Moves.prototype.token_info = function(callback) {
     this.http.get(this.config.oauth_base + '/tokeninfo?' + qs.stringify(query), callback)
 }
 
-Moves.prototype.get = function(call, callback) {
+Moves.prototype.get = function(call, params, callback) {
     if(!call) throw new Error('call is required. Please refer to the Moves docs <https://dev.moves-app.com/docs/api>')
     if(!this.access_token) throw new Error('Valid access token is required')
 
-    var get_url = url.parse(this.config.api_base, true)
-      , call_url = url.parse(call, true)
+    var url = url.join(this.config.api_base, call);
 
-    get_url.pathname += call_url.pathname
-    _.extend(get_url.query, call_url.query, {
-        access_token: this.config.access_token
-    })
-
-    this.http.get(url.format(get_url), callback)
-
+    params.access_token = this.config.access_token;
+    
+    this.http.get({url:url, qs:params}, callback)
 }
