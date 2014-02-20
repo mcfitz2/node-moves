@@ -20,6 +20,32 @@ var Moves = module.exports = function(config_obj) {
     if (!this.config.client_id) { 
 	throw new Error('Missing Client ID');
     }
+    var self = this;
+    this.user = {
+	profile:function() {
+	    console.log("fetch user profile", self);
+	},
+	summary:{
+	    daily:function() {}
+	},
+	activities:{
+	    daily:function() {}
+	},
+	places:{
+	    daily:function() {}
+	},
+	storyline:{
+	    daily:function(params, callback) {
+		if (typeof params === 'function') {
+		    callback = params;
+		    params = {};
+		}
+		self.get("/user/storyline/daily", params, function(err, res, body) {
+		    callback(err, body);
+		});
+	    }
+	}
+    };
 }
 
 Moves.prototype.authorize = function(options, res) {
@@ -105,5 +131,16 @@ Moves.prototype.get = function(call, params, callback) {
 
     params.access_token = this.config.access_token;
     
-    this.http.get({url:url, qs:params}, callback)
+    this.http.get({url:url, json:true, qs:params}, callback);
+}
+
+Moves.prototype.activities = function(params, callback) {
+    var self = this;
+    if (typeof params === 'function') {
+	callback = params;
+	params = {};
+    }
+    self.get("/activities", params, function(err, res, body) {
+	callback(err, body);
+    });
 }
