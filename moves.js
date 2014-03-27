@@ -1,7 +1,9 @@
 var _ = require('underscore')
-  , qs = require('querystring')
-  , request = require('request')
-, url = require('url');
+, qs = require('querystring')
+, request = require('request')
+, url = require('url')
+, moment = require("moment")
+, async = require("async");
 var Moves = module.exports = function(config_obj) {
     if (!(this instanceof Moves)) {
 	return new Moves(config_obj);
@@ -35,13 +37,50 @@ var Moves = module.exports = function(config_obj) {
 	    daily:function() {}
 	},
 	storyline:{
-	    daily:function(params, callback) {
+	    daily:function(day, params, callback) {
 		if (typeof params === 'function') {
 		    callback = params;
 		    params = {};
 		}
-		self.get("/user/storyline/daily", params, function(err, res, body) {
+		self.get("/user/storyline/daily/"+day, params, function(err, res, body) {
 		    callback(err, body);
+		});
+	    },
+	    all:function(params, callback) {
+		
+		if (typeof params === 'function') {
+		    callback = params;
+		    params = {};
+		}
+		//console.log("Grabbing entire storyline", params);
+		function f(thing) {
+		    return thing.format("YYYYMMDD");
+		}
+		function mkDates(start) {
+		    var now = moment();
+		    var diff = now.diff(moment(start, "YYYYMMDD"), 'days');
+		  //  console.log(now, diff);
+		    var lowEnd = 1;
+		    var highEnd = diff;
+		    var arr = [];
+		    while(lowEnd <= highEnd){
+			arr.push(f(moment(now).subtract(lowEnd++, 'days')));
+		    }
+		    return arr;
+		}
+		
+		self.get("/user/profile", {}, function(err, res, body) { 
+		    console.log(err, res.statusCode, body);
+		    var firstDate = body.profile.firstDate;
+		    var dates = mkDates(firstDate);
+		    //console.log(dates);
+		    async.concat(dates, function(date, callback) {
+			self.get("/user/storyline/daily/"+date, params, function(err, res, body) {
+			    callback(err, body);
+			});
+		    }, function(err, results) {
+			callback(err, results);
+		    });
 		});
 	    }
 	}
