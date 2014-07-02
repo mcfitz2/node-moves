@@ -22,6 +22,12 @@ var Moves = module.exports = function(config_obj) {
     if (!this.config.client_id) { 
 	throw new Error('Missing Client ID');
     }
+    if(!this.config.access_token) {
+	throw new Error('Valid access token is required');
+    }
+    if(!this.config.client_secret) {
+	throw new Error('Missing client secret');
+    }
     var self = this;
     this.user = {
 	profile:function() {
@@ -85,21 +91,25 @@ var Moves = module.exports = function(config_obj) {
 	    }
 	}
     };
-}
+};
 
 Moves.prototype.authorize = function(options, res) {
-    options = options || {}
+    options = options || {};
 
-    if(typeof res === 'object'
-    && typeof res.header !== 'function') throw new Error('authorize requires the first parameter to be a valid node response object')
-    if(!options.scope)                   throw new Error('Scope is required')
-    if(!_.isArray(options.scope))        throw new Error('Scope must be an array')
-
+    if(typeof res === 'object' && typeof res.header !== 'function') {
+	throw new Error('authorize requires the first parameter to be a valid node response object');
+    }
+    if(!options.scope) {
+        throw new Error('Scope is required');
+    }
+    if(!_.isArray(options.scope)) {
+	throw new Error('Scope must be an array');
+    }
     var query = {
         client_id: this.config.client_id
       , response_type: 'code'
       , scope: options.scope.join(' ')
-    }
+    };
 
     if(options.state) query.state = options.state
     if(options.redirect_uri) query.redirect_uri = options.redirect_uri
